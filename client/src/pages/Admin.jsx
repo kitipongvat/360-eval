@@ -355,7 +355,7 @@ export default function Admin() {
 
                 {/* Raw Score Table */}
                 <div className="card overflow-x-auto">
-                  <h4 className="font-bold text-gray-800 mb-3">📊 คะแนนดิบ (Average)</h4>
+                  <h4 className="font-bold text-gray-800 mb-3">📊 คะแนนดิบ</h4>
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="bg-gray-50">
@@ -363,7 +363,6 @@ export default function Admin() {
                         {['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8'].map(q => (
                           <th key={q} className="p-2 font-semibold text-gray-600 text-center">{q}</th>
                         ))}
-                        <th className="p-2 font-bold text-blue-700 text-center">รวม</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -377,9 +376,6 @@ export default function Admin() {
                               {r[q] ? Number(r[q]).toFixed(1) : '—'}
                             </td>
                           ))}
-                          <td className="p-2 text-center font-bold text-blue-700">
-                            {r.overall_avg ? Number(r.overall_avg).toFixed(2) : '—'}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -388,7 +384,7 @@ export default function Admin() {
 
                 {/* Norm Score Table */}
                 <div className="card overflow-x-auto mt-3">
-                  <h4 className="font-bold text-gray-800 mb-3">🎯 คะแนนอิงกลุ่ม (Norm)</h4>
+                  <h4 className="font-bold text-gray-800 mb-3">🎯 คะแนนอิงกลุ่ม</h4>
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="bg-gray-50">
@@ -400,21 +396,25 @@ export default function Admin() {
                       </tr>
                     </thead>
                     <tbody>
-                      {results.results.map((r, i) => (
-                        <tr key={r.employee_id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                          <td className="p-2 font-medium text-gray-800 sticky left-0 bg-inherit whitespace-nowrap">
-                            {r.name}
-                          </td>
-                          {['q1_norm','q2_norm','q3_norm','q4_norm','q5_norm','q6_norm','q7_norm','q8_norm'].map(q => (
-                            <td key={q} className="p-2 text-center">
-                              <NormBadge value={r[q]} />
+                      {results.results.map((r, i) => {
+                        const normKeys = ['q1_norm','q2_norm','q3_norm','q4_norm','q5_norm','q6_norm','q7_norm','q8_norm'];
+                        const normSum = normKeys.reduce((sum, q) => sum + (Number(r[q]) || 0), 0);
+                        return (
+                          <tr key={r.employee_id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="p-2 font-medium text-gray-800 sticky left-0 bg-inherit whitespace-nowrap">
+                              {r.name}
                             </td>
-                          ))}
-                          <td className="p-2 text-center font-bold text-green-700">
-                            {r.overall_norm ? Number(r.overall_norm).toFixed(1) : '—'}
-                          </td>
-                        </tr>
-                      ))}
+                            {normKeys.map(q => (
+                              <td key={q} className="p-2 text-center">
+                                <NormBadge value={r[q]} />
+                              </td>
+                            ))}
+                            <td className="p-2 text-center font-bold text-green-700">
+                              {normSum > 0 ? normSum : '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
