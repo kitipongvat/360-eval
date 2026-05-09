@@ -17,7 +17,7 @@ export default function SetupPin() {
   async function handleSetup(e) {
     e.preventDefault();
     if (pin.length < 4) return setError('PIN ต้องมีอย่างน้อย 4 หลัก');
-    if (pin !== confirm) return setError('PIN ไม่ตรงกัน กรุณากรอกใหม่');
+    if (!isAdmin && pin !== confirm) return setError('PIN ไม่ตรงกัน กรุณากรอกใหม่');
     setLoading(true);
     setError('');
 
