@@ -455,48 +455,48 @@ export default function Admin() {
               </button>
             </div>
 
-            {yearlyData && (
+            {yearlyData && yearlyData.rounds && (
               <div className="card overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="text-left p-2 sticky left-0 bg-gray-50 text-gray-600">ชื่อ</th>
-                      {['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8'].map(q => (
-                        <th key={q} className="p-2 text-gray-600 text-center">{q}</th>
-                      ))}
-                      <th className="p-2 text-blue-700 font-bold text-center">เฉลี่ย</th>
-                      <th className="p-2 text-green-700 font-bold text-center">Norm</th>
-                      <th className="p-2 text-gray-500 text-center">รอบ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {yearlyData.map((r, i) => (
-                      <tr key={r.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="p-2 font-medium text-gray-800 sticky left-0 bg-inherit whitespace-nowrap">
-                          {r.name}
-                        </td>
-                        {['q1_yearly','q2_yearly','q3_yearly','q4_yearly','q5_yearly','q6_yearly','q7_yearly','q8_yearly'].map(q => (
-                          <td key={q} className="p-2 text-center text-gray-700">
-                            {r[q] ? Number(r[q]).toFixed(1) : '—'}
-                          </td>
+                {yearlyData.rounds.length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-4">ยังไม่มีรอบที่ปิดแล้ว</p>
+                ) : (
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="text-left p-2 sticky left-0 bg-gray-50 text-gray-600 whitespace-nowrap">ชื่อ</th>
+                        {yearlyData.rounds.map(r => (
+                          <th key={r.id} className="p-2 text-gray-600 text-center whitespace-nowrap">
+                            {r.round_name}
+                          </th>
                         ))}
-                        <td className="p-2 text-center font-bold text-blue-700">
-                          {r.yearly_avg ? Number(r.yearly_avg).toFixed(2) : '—'}
-                        </td>
-                        <td className="p-2 text-center font-bold text-green-700">
-                          {r.yearly_norm ? Number(r.yearly_norm).toFixed(1) : '—'}
-                        </td>
-                        <td className="p-2 text-center text-gray-400">{r.rounds_count}</td>
+                        <th className="p-2 text-blue-700 font-bold text-center whitespace-nowrap">เฉลี่ย</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {yearlyData.employees.map((emp, i) => (
+                        <tr key={emp.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="p-2 font-medium text-gray-800 sticky left-0 bg-inherit whitespace-nowrap">
+                            {emp.name}
+                          </td>
+                          {emp.roundScores.map(rs => (
+                            <td key={rs.round_id} className="p-2 text-center text-gray-700 font-medium">
+                              {rs.norm_sum !== null ? rs.norm_sum : '—'}
+                            </td>
+                          ))}
+                          <td className="p-2 text-center font-bold text-blue-700">
+                            {emp.yearly_avg !== null ? Number(emp.yearly_avg).toFixed(2) : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             )}
 
             {!yearlyData && !loading && (
               <div className="card text-center py-8 text-gray-500">
-                <p>กด "โหลด" เพื่อดูคะแนนเฉลี่ยรายปี</p>
+                <p>กด "โหลด" เพื่อดูคะแนนรวม Norm รายรอบ</p>
               </div>
             )}
           </div>

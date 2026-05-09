@@ -205,33 +205,62 @@ router.get('/history', requireAdmin, async (req, res) => {
   }
 });
 
-// GET /api/admin/yearly-avg — compute year-end averages
+// GET /api/admin/yearly-avg — norm sum per round, then yearly average
 router.get('/yearly-avg', requireAdmin, async (req, res) => {
   const { year } = req.query;
   try {
-    const result = await db.query(
-      `SELECT e.id, e.name,
-         ROUND(AVG(sr.q1_avg)::numeric, 2) as q1_yearly,
-         ROUND(AVG(sr.q2_avg)::numeric, 2) as q2_yearly,
-         ROUND(AVG(sr.q3_avg)::numeric, 2) as q3_yearly,
-         ROUND(AVG(sr.q4_avg)::numeric, 2) as q4_yearly,
-         ROUND(AVG(sr.q5_avg)::numeric, 2) as q5_yearly,
-         ROUND(AVG(sr.q6_avg)::numeric, 2) as q6_yearly,
-         ROUND(AVG(sr.q7_avg)::numeric, 2) as q7_yearly,
-         ROUND(AVG(sr.q8_avg)::numeric, 2) as q8_yearly,
-         ROUND(AVG(sr.overall_avg)::numeric, 2) as yearly_avg,
-         ROUND(AVG(sr.overall_norm)::numeric, 2) as yearly_norm,
-         COUNT(sr.round_id) as rounds_count
-       FROM employees e
-       LEFT JOIN score_results sr ON sr.employee_id=e.id
-       LEFT JOIN eval_rounds r ON r.id=sr.round_id
-       WHERE ($1::text IS NULL OR EXTRACT(YEAR FROM r.open_at)=$1::integer)
-         AND r.status IN ('closed','published')
-       GROUP BY e.id, e.name
-       ORDER BY yearly_avg DESC NULLS LAST`,
+    // Get all closed/published rounds (filtered by year if given)
+    const roundsRes = await db.query(
+      `SELECT id, round_name FROM eval_rounds
+       WHERE status IN ('closed','published')
+         AND ($1::text IS NULL OR EXTRACT(YEAR FROM open_at) = $1::integer)
+       ORDER BY id ASC`,
       [year || null]
     );
-    res.json(result.rows);
+    const rounds = roundsRes.rows;
+
+    // Get all employees
+    const empRes = await db.query(`SELECT id, name FROM employees ORDER BY id`);
+    const employees = empRes.rows;
+
+    // Get norm sums per employee per round
+    const normRes = await db.query(
+      `SELECT sr.employee_id, sr.round_id,
+         COALESCE(sr.q1_norm,0)+COALESCE(sr.q2_norm,0)+COALESCE(sr.q3_norm,0)+COALESCE(sr.q4_norm,0)+
+         COALESCE(sr.q5_norm,0)+COALESCE(sr.q6_norm,0)+COALESCE(sr.q7_norm,0)+COALESCE(sr.q8_norm,0)
+         AS norm_sum
+       FROM score_results sr
+       JOIN eval_rounds r ON r.id = sr.round_id
+       WHERE r.status IN ('closed','published')
+         AND ($1::text IS NULL OR EXTRACT(YEAR FROM r.open_at) = $1::integer)`,
+      [year || null]
+    );
+
+    // Build lookup: normLookup[employee_id][round_id] = norm_sum
+    const normLookup = {};
+    for (const row of normRes.rows) {
+      if (!normLookup[row.employee_id]) normLookup[row.employee_id] = {};
+      normLookup[row.employee_id][row.round_id] = parseInt(row.norm_sum);
+    }
+
+    // Build result rows
+    const result = employees.map(emp => {
+      const roundScores = rounds.map(r => ({
+        round_id: r.id,
+        round_name: r.round_name,
+        norm_sum: normLookup[emp.id]?.[r.id] ?? null,
+      }));
+      const validSums = roundScores.filter(r => r.norm_sum !== null).map(r => r.norm_sum);
+      const yearly_avg = validSums.length > 0
+        ? Math.round((validSums.reduce((a, b) => a + b, 0) / validSums.length) * 100) / 100
+        : null;
+      return { id: emp.id, name: emp.name, roundScores, yearly_avg, rounds_count: validSums.length };
+    });
+
+    // Sort by yearly_avg desc
+    result.sort((a, b) => (b.yearly_avg ?? -1) - (a.yearly_avg ?? -1));
+
+    res.json({ rounds, employees: result });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
