@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: 360-eval
+    env: node
+    buildCommand: npm run setup
+    startCommand: npm start
+    healthCheckPath: /ping
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: 360-eval-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: LINE_CHANNEL_ACCESS_TOKEN
+        sync: false
+      - key: LINE_GROUP_ID
+        value: C90e76bf018150c361e4558f2b260b683
+      - key: LINE_ADMIN_USER_ID
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: ADMIN_PIN
+        sync: false
+
+databases:
+  - name: 360-eval-db
+    databaseName: eval360
+    user: eval360user
+    plan: free
