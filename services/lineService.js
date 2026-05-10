@@ -146,19 +146,16 @@ async function notifyAdminResults(roundName, rawTable, normTable, appUrl) {
   await sendAdminMessage(msgs);
 }
 
-// 6) Publish results to group (2 messages: header+raw, then norm)
+// 6) Publish results to group (1 message only to save quota)
 async function notifyPublishResults(roundName, rawText, normText) {
-  const msg1 = {
+  const msg = {
     type: 'text',
     text:
-      `🏆 ประกาศผลการประเมิน 360°\n📋 รอบ: ${roundName}\n\n` +
-      `📊 คะแนนดิบ (Average Score)\n\n${rawText}`,
+      `🏆 ผลการประเมิน 360° รอบ: ${roundName}\n\n` +
+      `📊 คะแนนดิบ\n${rawText}\n\n` +
+      `🎯 คะแนนอิงกลุ่ม\n${normText}`,
   };
-  const msg2 = {
-    type: 'text',
-    text: `🎯 คะแนนอิงกลุ่ม (Norm-Referenced Score)\n\n${normText}`,
-  };
-  await sendGroupMessage([msg1, msg2]);
+  await sendGroupMessage(msg);
 }
 
 module.exports = {
