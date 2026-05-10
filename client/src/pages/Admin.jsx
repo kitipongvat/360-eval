@@ -339,17 +339,14 @@ export default function Admin() {
                       className="text-sm bg-yellow-500 text-white px-3 py-1.5 rounded-lg hover:bg-yellow-600">
                       🔄 คำนวณใหม่
                     </button>
-                    {results.round.status !== 'published' && (
-                      <button onClick={publishResults}
-                        className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700">
-                        📲 ยืนยัน + ส่ง LINE
-                      </button>
-                    )}
-                    {results.round.status === 'published' && (
-                      <span className="text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg">
-                        ✓ ประกาศผลแล้ว
-                      </span>
-                    )}
+                    <button onClick={publishResults}
+                      className={`text-sm px-3 py-1.5 rounded-lg ${
+                        results.round.status === 'published'
+                          ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                          : 'bg-green-600 text-white hover:bg-green-700'
+                      }`}>
+                      {results.round.status === 'published' ? '✓ ส่ง LINE อีกครั้ง' : '📲 ยืนยัน + ส่ง LINE'}
+                    </button>
                   </div>
                 </div>
 
