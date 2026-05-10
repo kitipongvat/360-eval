@@ -65,7 +65,7 @@ async function generateQRCode(url) {
 
 // ─── Notification Templates ───────────────────────────────────────────────────
 
-// 1) Open evaluation — send to group with link (1 message)
+// 1) Open evaluation — notify admin only
 async function notifyEvalOpen(roundName, appUrl) {
   const link = `${appUrl}/`;
   const today = new Date().toLocaleDateString('th-TH', {
@@ -75,18 +75,17 @@ async function notifyEvalOpen(roundName, appUrl) {
   const msg = {
     type: 'text',
     text:
-      `🔔 เปิดการประเมิน 360° แล้ววันนี้!\n` +
+      `🔔 [แจ้ง Admin] เปิดการประเมินแล้ว\n` +
       `📋 รอบ: ${roundName}\n` +
       `📅 ${today}\n` +
-      `⏰ เวลา 08:00 – 21:00 น.\n\n` +
-      `👉 คลิกลิงก์เพื่อเข้าประเมิน:\n${link}\n\n` +
-      `(ประเมินเพื่อนร่วมงานทุกคน 20 คน 8 หัวข้อ)`,
+      `⏰ 08:00 – 21:00 น.\n\n` +
+      `👉 ลิงก์สำหรับแจ้งในกลุ่ม:\n${link}`,
   };
 
-  await sendGroupMessage(msg);
+  await sendAdminMessage(msg);
 }
 
-// 2) Reminder — who hasn't evaluated yet
+// 2) Reminder — notify admin only with pending list
 async function notifyReminder(pendingNames, hoursLeft) {
   if (!pendingNames || pendingNames.length === 0) return;
 
@@ -97,37 +96,37 @@ async function notifyReminder(pendingNames, hoursLeft) {
   const msg = {
     type: 'text',
     text:
-      `⏰ แจ้งเตือน: เหลือเวลาอีก ${hoursLeft} ชั่วโมง!\n\n` +
-      `📋 รายชื่อที่ยังไม่ได้ประเมิน (${pendingNames.length} คน):\n` +
+      `⏰ [แจ้ง Admin] เหลือเวลาอีก ${hoursLeft} ชม.\n\n` +
+      `ยังไม่ได้ประเมิน (${pendingNames.length} คน):\n` +
       `${nameList}\n\n` +
-      `กรุณาประเมินก่อน 21:00 น. นะครับ/ค่ะ 🙏`,
+      `(สามารถ forward แจ้งในกลุ่มได้เลยครับ)`,
   };
 
-  await sendGroupMessage(msg);
+  await sendAdminMessage(msg);
 }
 
-// 3) All done — thank you
+// 3) All done — notify admin only
 async function notifyAllComplete(roundName) {
   const msg = {
     type: 'text',
     text:
-      `✅ ขอบคุณทุกคนมากนะครับ!\n` +
-      `🎉 การประเมิน "${roundName}" สมบูรณ์แล้ว!\n` +
-      `ทุกคนส่งผลการประเมินครบถ้วนแล้ว ระบบกำลังประมวลผลคะแนน...`,
+      `✅ [แจ้ง Admin] ทุกคนส่งครบแล้ว!\n` +
+      `🎉 รอบ: ${roundName}\n` +
+      `ระบบกำลังประมวลผลคะแนน...`,
   };
-  await sendGroupMessage(msg);
+  await sendAdminMessage(msg);
 }
 
-// 4) System closed — not all submitted
+// 4) System closed — notify admin only
 async function notifySystemClosed(roundName, submittedCount, totalCount) {
   const msg = {
     type: 'text',
     text:
-      `🔒 ปิดระบบประเมิน "${roundName}" แล้ว\n` +
+      `🔒 [แจ้ง Admin] ปิดรอบ "${roundName}" แล้ว\n` +
       `📊 ส่งผลแล้ว: ${submittedCount}/${totalCount} คน\n` +
-      `ระบบกำลังประมวลผลคะแนนจากข้อมูลที่ได้รับ...`,
+      `ระบบกำลังประมวลผลคะแนน...`,
   };
-  await sendGroupMessage(msg);
+  await sendAdminMessage(msg);
 }
 
 // 5) Send results to admin for review
@@ -146,16 +145,17 @@ async function notifyAdminResults(roundName, rawTable, normTable, appUrl) {
   await sendAdminMessage(msgs);
 }
 
-// 6) Publish results to group (1 message only to save quota)
+// 6) Publish results — notify admin only (admin forwards to group)
 async function notifyPublishResults(roundName, rawText, normText) {
   const msg = {
     type: 'text',
     text:
-      `🏆 ผลการประเมิน 360° รอบ: ${roundName}\n\n` +
+      `🏆 [แจ้ง Admin] ผลการประเมิน 360°\n📋 รอบ: ${roundName}\n\n` +
       `📊 คะแนนดิบ\n${rawText}\n\n` +
-      `🎯 คะแนนอิงกลุ่ม\n${normText}`,
+      `🎯 คะแนนอิงกลุ่ม\n${normText}\n\n` +
+      `(กรุณา forward ข้อความนี้เข้ากลุ่มพนักงานด้วยครับ)`,
   };
-  await sendGroupMessage(msg);
+  await sendAdminMessage(msg);
 }
 
 module.exports = {
