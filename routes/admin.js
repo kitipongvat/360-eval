@@ -3,7 +3,6 @@ const router = express.Router();
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const scoreService = require('../services/scoreService');
-const lineService = require('../services/lineService');
 const cronService = require('../services/cronService');
 
 // GET /api/admin/rounds — list all rounds
@@ -114,46 +113,22 @@ router.post('/results/:roundId/recompute', requireAdmin, async (req, res) => {
   }
 });
 
-// POST /api/admin/results/:roundId/publish — confirm & publish to LINE group
+// POST /api/admin/results/:roundId/publish — mark as published
 router.post('/results/:roundId/publish', requireAdmin, async (req, res) => {
   try {
     const { roundId } = req.params;
-
-    // Get round
     const roundRes = await db.query('SELECT * FROM eval_rounds WHERE id=$1', [roundId]);
-    const round = roundRes.rows[0];
-    if (!round) return res.status(404).json({ error: 'ไม่พบรอบการประเมิน' });
+    if (!roundRes.rows[0]) return res.status(404).json({ error: 'ไม่พบรอบการประเมิน' });
 
-    // Get results
     const rawRes = await db.query(
-      `SELECT sr.*, e.name FROM score_results sr
-       JOIN employees e ON e.id=sr.employee_id
-       WHERE sr.round_id=$1 ORDER BY sr.overall_avg DESC NULLS LAST`,
-      [roundId]
+      `SELECT * FROM score_results WHERE round_id=$1`, [roundId]
     );
-
     if (rawRes.rows.length === 0) {
       return res.status(400).json({ error: 'ยังไม่มีผลคะแนน กรุณาคำนวณก่อน' });
     }
 
-    const rawText = scoreService.formatRawTable(rawRes.rows.map(r => ({
-      name: r.name,
-      q1: r.q1_avg, q2: r.q2_avg, q3: r.q3_avg, q4: r.q4_avg,
-      q5: r.q5_avg, q6: r.q6_avg, q7: r.q7_avg, q8: r.q8_avg,
-      overall: r.overall_avg,
-    })));
-
-    const normText = scoreService.formatNormTable(rawRes.rows.map(r => ({
-      name: r.name,
-      q1_norm: r.q1_norm, q2_norm: r.q2_norm, q3_norm: r.q3_norm, q4_norm: r.q4_norm,
-      q5_norm: r.q5_norm, q6_norm: r.q6_norm, q7_norm: r.q7_norm, q8_norm: r.q8_norm,
-      overall_norm: r.overall_norm,
-    })));
-
-    await lineService.notifyPublishResults(round.round_name, rawText, normText);
     await db.query(`UPDATE eval_rounds SET status='published' WHERE id=$1`, [roundId]);
-
-    res.json({ success: true, message: 'ส่งผลเข้ากลุ่ม LINE แล้ว!' });
+    res.json({ success: true, message: 'บันทึกผลเรียบร้อยแล้ว!' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

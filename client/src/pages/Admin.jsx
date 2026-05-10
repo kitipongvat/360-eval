@@ -187,6 +187,21 @@ export default function Admin() {
                   </span>
                 </div>
 
+                {/* QR Code */}
+                {status.round.status === 'open' && (
+                  <div className="flex flex-col items-center mb-4 py-3 bg-gray-50 rounded-xl">
+                    <p className="text-xs text-gray-500 mb-2">📷 สแกน QR เพื่อเข้าประเมิน</p>
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(window.location.origin)}`}
+                      alt="QR Code"
+                      className="rounded-lg"
+                      width={180}
+                      height={180}
+                    />
+                    <p className="text-xs text-blue-600 mt-2">{window.location.origin}</p>
+                  </div>
+                )}
+
                 {/* Progress */}
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-600">ส่งแล้ว</span>
@@ -339,14 +354,17 @@ export default function Admin() {
                       className="text-sm bg-yellow-500 text-white px-3 py-1.5 rounded-lg hover:bg-yellow-600">
                       🔄 คำนวณใหม่
                     </button>
-                    <button onClick={publishResults}
-                      className={`text-sm px-3 py-1.5 rounded-lg ${
-                        results.round.status === 'published'
-                          ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                          : 'bg-green-600 text-white hover:bg-green-700'
-                      }`}>
-                      {results.round.status === 'published' ? '✓ ส่ง LINE อีกครั้ง' : '📲 ยืนยัน + ส่ง LINE'}
-                    </button>
+                    {results.round.status !== 'published' && (
+                      <button onClick={publishResults}
+                        className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700">
+                        ✅ บันทึกผลเสร็จสิ้น
+                      </button>
+                    )}
+                    {results.round.status === 'published' && (
+                      <span className="text-sm bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg">
+                        ✓ บันทึกผลแล้ว
+                      </span>
+                    )}
                   </div>
                 </div>
 

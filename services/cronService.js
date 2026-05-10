@@ -1,6 +1,5 @@
 const cron = require('node-cron');
 const db = require('../db');
-const lineService = require('./lineService');
 const scoreService = require('./scoreService');
 
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
@@ -57,22 +56,8 @@ async function closeRound(round) {
   const completedCount = await getCompletedCount(round.id);
   const totalEmployees = 21;
 
-  if (completedCount >= totalEmployees) {
-    await lineService.notifyAllComplete(round.round_name);
-  } else {
-    await lineService.notifySystemClosed(round.round_name, completedCount, totalEmployees);
-  }
-
   // Compute scores
-  const { rawScores, normScores } = await scoreService.computeScores(round.id);
-
-  // Notify admin
-  await lineService.notifyAdminResults(
-    round.round_name,
-    scoreService.formatRawTable(rawScores),
-    scoreService.formatNormTable(normScores),
-    APP_URL
-  );
+  await scoreService.computeScores(round.id);
 }
 
 // ─── Check and remind ────────────────────────────────────────────────────────
@@ -94,16 +79,12 @@ async function checkAndRemind() {
   const completed = await getCompletedCount(round.id);
 
   if (pending.length === 0) {
-    // Everyone done!
-    await lineService.notifyAllComplete(round.round_name);
+    // Everyone done — auto close
     await closeRound(round);
     return;
   }
 
-  // Send reminder with pending list
-  const pendingNames = pending.map(p => p.name);
-  await lineService.notifyReminder(pendingNames, hoursLeft);
-  console.log(`[Cron] Reminder sent: ${pending.length} pending, ${hoursLeft}h left`);
+  console.log(`[Cron] Reminder check: ${pending.length} pending, ${hoursLeft}h left`);
 }
 
 // ─── Cron Jobs ───────────────────────────────────────────────────────────────
@@ -120,7 +101,6 @@ function startCronJobs() {
     const round = res.rows[0];
     if (round) {
       await openRound(round.id);
-      await lineService.notifyEvalOpen(round.round_name, APP_URL);
     }
   }, { timezone: 'Asia/Bangkok' });
 
@@ -151,11 +131,6 @@ function startCronJobs() {
 // ─── Manual triggers (for admin) ────────────────────────────────────────────
 async function manualOpenRound(roundId) {
   await openRound(roundId);
-  const res = await db.query('SELECT * FROM eval_rounds WHERE id=$1', [roundId]);
-  const round = res.rows[0];
-  if (round) {
-    await lineService.notifyEvalOpen(round.round_name, APP_URL);
-  }
 }
 
 async function manualCloseRound(roundId) {
