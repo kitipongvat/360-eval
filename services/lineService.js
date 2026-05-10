@@ -65,32 +65,25 @@ async function generateQRCode(url) {
 
 // ─── Notification Templates ───────────────────────────────────────────────────
 
-// 1) Open evaluation — send to group with link
+// 1) Open evaluation — send to group with link (1 message)
 async function notifyEvalOpen(roundName, appUrl) {
   const link = `${appUrl}/`;
   const today = new Date().toLocaleDateString('th-TH', {
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
   });
 
-  const messages = [
-    {
-      type: 'text',
-      text:
-        `🔔 เปิดการประเมิน 360° แล้ววันนี้!\n` +
-        `📋 รอบ: ${roundName}\n` +
-        `📅 ${today}\n` +
-        `⏰ เวลา 08:00 – 21:00 น.\n\n` +
-        `👉 คลิกลิงก์เพื่อเข้าประเมิน:\n${link}\n\n` +
-        `หรือสแกน QR Code ด้านล่าง\n` +
-        `(ประเมินเพื่อนร่วมงานทุกคน 20 คน 8 หัวข้อ)`,
-    },
-    {
-      type: 'text',
-      text: `🔗 ${link}`,
-    },
-  ];
+  const msg = {
+    type: 'text',
+    text:
+      `🔔 เปิดการประเมิน 360° แล้ววันนี้!\n` +
+      `📋 รอบ: ${roundName}\n` +
+      `📅 ${today}\n` +
+      `⏰ เวลา 08:00 – 21:00 น.\n\n` +
+      `👉 คลิกลิงก์เพื่อเข้าประเมิน:\n${link}\n\n` +
+      `(ประเมินเพื่อนร่วมงานทุกคน 20 คน 8 หัวข้อ)`,
+  };
 
-  await sendGroupMessage(messages);
+  await sendGroupMessage(msg);
 }
 
 // 2) Reminder — who hasn't evaluated yet
@@ -153,23 +146,19 @@ async function notifyAdminResults(roundName, rawTable, normTable, appUrl) {
   await sendAdminMessage(msgs);
 }
 
-// 6) Publish results to group
+// 6) Publish results to group (2 messages: header+raw, then norm)
 async function notifyPublishResults(roundName, rawText, normText) {
-  const msgs = [
-    {
-      type: 'text',
-      text: `🏆 ประกาศผลการประเมิน 360°\n📋 รอบ: ${roundName}`,
-    },
-    {
-      type: 'text',
-      text: `📊 ตารางคะแนนดิบ (Average Score)\n\n${rawText}`,
-    },
-    {
-      type: 'text',
-      text: `🎯 ตารางคะแนนอิงกลุ่ม (Norm-Referenced Score)\n\n${normText}`,
-    },
-  ];
-  await sendGroupMessage(msgs);
+  const msg1 = {
+    type: 'text',
+    text:
+      `🏆 ประกาศผลการประเมิน 360°\n📋 รอบ: ${roundName}\n\n` +
+      `📊 คะแนนดิบ (Average Score)\n\n${rawText}`,
+  };
+  const msg2 = {
+    type: 'text',
+    text: `🎯 คะแนนอิงกลุ่ม (Norm-Referenced Score)\n\n${normText}`,
+  };
+  await sendGroupMessage([msg1, msg2]);
 }
 
 module.exports = {
