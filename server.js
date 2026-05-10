@@ -13,6 +13,9 @@ const { startCronJobs } = require('./services/cronService');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust Render's reverse proxy (fixes express-rate-limit X-Forwarded-For warning)
+app.set('trust proxy', 1);
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
