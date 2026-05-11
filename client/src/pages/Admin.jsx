@@ -3,7 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import api from '../api';
 
-const QUESTIONS_SHORT = ['Q1\nทีม', 'Q2\nช่วย', 'Q3\nเร็ว', 'Q4\nไอเดีย', 'Q5\nส่วนรวม', 'Q6\nประสาน', 'Q7\nตอบสนอง', 'Q8\nDeadline'];
+const QUESTIONS_SHORT = [
+  { key: 'Q1', label: 'ทีมเวิร์ค' },
+  { key: 'Q2', label: 'ช่วยเหลือ' },
+  { key: 'Q3', label: 'ประสิทธิภาพ' },
+  { key: 'Q4', label: 'ความคิด' },
+  { key: 'Q5', label: 'ส่วนรวม' },
+  { key: 'Q6', label: 'ประสานงาน' },
+  { key: 'Q7', label: 'ตอบสนอง' },
+  { key: 'Q8', label: 'Deadline' },
+];
 
 export default function Admin() {
   const { logout } = useAuth();
@@ -375,8 +384,11 @@ export default function Admin() {
                     <thead>
                       <tr className="bg-gray-50">
                         <th className="text-left p-2 font-semibold text-gray-600 sticky left-0 bg-gray-50">ชื่อ</th>
-                        {['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8'].map(q => (
-                          <th key={q} className="p-2 font-semibold text-gray-600 text-center">{q}</th>
+                        {QUESTIONS_SHORT.map(q => (
+                          <th key={q.key} className="p-2 font-semibold text-gray-600 text-center">
+                            <div>{q.key}</div>
+                            <div className="text-gray-400 font-normal">{q.label}</div>
+                          </th>
                         ))}
                       </tr>
                     </thead>
@@ -404,8 +416,11 @@ export default function Admin() {
                     <thead>
                       <tr className="bg-gray-50">
                         <th className="text-left p-2 font-semibold text-gray-600 sticky left-0 bg-gray-50">ชื่อ</th>
-                        {['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8'].map(q => (
-                          <th key={q} className="p-2 font-semibold text-gray-600 text-center">{q}</th>
+                        {QUESTIONS_SHORT.map(q => (
+                          <th key={q.key} className="p-2 font-semibold text-gray-600 text-center">
+                            <div>{q.key}</div>
+                            <div className="text-gray-400 font-normal">{q.label}</div>
+                          </th>
                         ))}
                         <th className="p-2 font-bold text-green-700 text-center">รวม</th>
                       </tr>
