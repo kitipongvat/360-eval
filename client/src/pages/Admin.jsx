@@ -4,14 +4,14 @@ import { useAuth } from '../App';
 import api from '../api';
 
 const QUESTIONS_SHORT = [
-  { key: 'Q1', label: 'ทำงานเป็นทีม และเน้นเป้าหมายของทีมเป็นหลัก' },
-  { key: 'Q2', label: 'ช่วยเหลือเพื่อนร่วมงานโดยไม่ต้องรอให้ขอ' },
-  { key: 'Q3', label: 'พยายามหาวิธีทำให้งานเสร็จก่อนกำหนด' },
-  { key: 'Q4', label: 'แสดงความคิดเห็นที่สามารถนำไปใช้จริงได้' },
-  { key: 'Q5', label: 'คำนึงถึงผลประโยชน์ส่วนรวมก่อนผลประโยชน์ส่วนตัว' },
-  { key: 'Q6', label: 'ติดตามและประสานงานให้ได้ผลลัพธ์ตามที่ต้องการ' },
-  { key: 'Q7', label: 'สนใจและให้ความร่วมมือทันทีเมื่อมีคนติดตามงาน' },
-  { key: 'Q8', label: 'แจ้งกำหนดส่งงานแล้วทำได้ ไม่เคยเลื่อนกำหนด' },
+  { key: 'Q1', th: 'ทำงานเป็นทีม และเน้นเป้าหมายของทีมเป็นหลัก', en: 'Work as a team and focus on team goals' },
+  { key: 'Q2', th: 'ช่วยเหลือเพื่อนร่วมงานโดยไม่ต้องรอให้ขอ', en: 'Help teammates without being asked' },
+  { key: 'Q3', th: 'พยายามหาวิธีทำให้งานเสร็จก่อนกำหนด', en: 'Try to finish work ahead of schedule' },
+  { key: 'Q4', th: 'แสดงความคิดเห็นที่สามารถนำไปใช้จริงได้', en: 'Share ideas that can be applied in real work' },
+  { key: 'Q5', th: 'คำนึงถึงผลประโยชน์ส่วนรวมก่อนผลประโยชน์ส่วนตัว', en: "Think of the team's benefit before your own" },
+  { key: 'Q6', th: 'ติดตามและประสานงานให้ได้ผลลัพธ์ตามที่ต้องการ', en: 'Follow up and coordinate to get desired results' },
+  { key: 'Q7', th: 'สนใจและให้ความร่วมมือทันทีเมื่อมีคนติดตามงาน', en: 'Respond and cooperate immediately when followed up' },
+  { key: 'Q8', th: 'แจ้งกำหนดส่งงานแล้วทำได้ ไม่เคยเลื่อนกำหนด', en: 'Meet deadlines as scheduled — never postpone' },
 ];
 
 export default function Admin() {
@@ -377,6 +377,20 @@ export default function Admin() {
                   </div>
                 </div>
 
+                {/* Question Legend */}
+                <div className="card mb-3">
+                  <h4 className="font-bold text-gray-800 mb-2 text-sm">📋 หัวข้อการประเมิน</h4>
+                  <div className="space-y-1">
+                    {QUESTIONS_SHORT.map(q => (
+                      <div key={q.key} className="flex gap-2 text-xs">
+                        <span className="font-bold text-blue-600 w-6 shrink-0">{q.key}</span>
+                        <span className="text-gray-700">{q.th}</span>
+                        <span className="text-gray-400 italic">/ {q.en}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Raw Score Table */}
                 <div className="card overflow-x-auto">
                   <h4 className="font-bold text-gray-800 mb-3">📊 คะแนนดิบ</h4>
@@ -385,10 +399,7 @@ export default function Admin() {
                       <tr className="bg-gray-50">
                         <th className="text-left p-2 font-semibold text-gray-600 sticky left-0 bg-gray-50">ชื่อ</th>
                         {QUESTIONS_SHORT.map(q => (
-                          <th key={q.key} className="p-2 font-semibold text-gray-600 text-center">
-                            <div>{q.key}</div>
-                            <div className="text-gray-400 font-normal">{q.label}</div>
-                          </th>
+                          <th key={q.key} className="p-2 font-semibold text-blue-600 text-center">{q.key}</th>
                         ))}
                       </tr>
                     </thead>
@@ -417,10 +428,7 @@ export default function Admin() {
                       <tr className="bg-gray-50">
                         <th className="text-left p-2 font-semibold text-gray-600 sticky left-0 bg-gray-50">ชื่อ</th>
                         {QUESTIONS_SHORT.map(q => (
-                          <th key={q.key} className="p-2 font-semibold text-gray-600 text-center">
-                            <div>{q.key}</div>
-                            <div className="text-gray-400 font-normal">{q.label}</div>
-                          </th>
+                          <th key={q.key} className="p-2 font-semibold text-blue-600 text-center">{q.key}</th>
                         ))}
                         <th className="p-2 font-bold text-green-700 text-center">รวม</th>
                       </tr>
