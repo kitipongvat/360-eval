@@ -116,12 +116,19 @@ function startCronJobs() {
     await checkAndRemind();
   }, { timezone: 'Asia/Bangkok' });
 
-  // At 21:00 — close round
+  // At 21:00 — close round only if close_at has passed
   cron.schedule('0 21 * * *', async () => {
-    console.log('[Cron] 21:00 closing round');
+    console.log('[Cron] 21:00 check close');
     const round = await getActiveRound();
     if (round) {
-      await closeRound(round);
+      const now = new Date();
+      const closeTime = new Date(round.close_at);
+      if (now >= closeTime) {
+        console.log(`[Cron] Closing round ${round.id} — close_at reached`);
+        await closeRound(round);
+      } else {
+        console.log(`[Cron] Round ${round.id} not yet due — close_at: ${closeTime}`);
+      }
     }
   }, { timezone: 'Asia/Bangkok' });
 
