@@ -25,6 +25,9 @@ export default function Admin() {
   const [yearlyData, setYearlyData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [rawEvals, setRawEvals] = useState(null);
+  const [rawEvalsRoundId, setRawEvalsRoundId] = useState(null);
+  const [rawEvalsFilter, setRawEvalsFilter] = useState({ evaluator: '', evaluatee: '' });
 
   // New round form
   const [newRound, setNewRound] = useState({ roundName: '', openAt: '', closeAt: '' });
@@ -54,6 +57,21 @@ export default function Admin() {
       setTab('results');
     } catch (e) {
       showMsg('ไม่สามารถโหลดผลได้');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadRawEvals(roundId) {
+    setLoading(true);
+    try {
+      const res = await api.get(`/admin/raw-evals/${roundId}`);
+      setRawEvals(res.data);
+      setRawEvalsRoundId(roundId);
+      setRawEvalsFilter({ evaluator: '', evaluatee: '' });
+      setTab('raweval');
+    } catch (e) {
+      showMsg('ไม่สามารถโหลดข้อมูลได้');
     } finally {
       setLoading(false);
     }
@@ -166,6 +184,7 @@ export default function Admin() {
             { id: 'status', label: '📊 สถานะ' },
             { id: 'rounds', label: '📋 รอบประเมิน' },
             { id: 'results', label: '🏆 ผลคะแนน' },
+            { id: 'raweval', label: '🔍 คะแนนดิบรายคน' },
             { id: 'yearly', label: '📈 ประวัติ' },
           ].map(t => (
             <button
@@ -334,6 +353,12 @@ export default function Admin() {
                       📊 ดูผลคะแนน
                     </button>
                   )}
+                  {(r.status === 'closed' || r.status === 'published') && (
+                    <button onClick={() => loadRawEvals(r.id)}
+                      className="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
+                      🔍 คะแนนดิบรายคน
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -478,6 +503,92 @@ export default function Admin() {
             {!results && !loading && (
               <div className="card text-center py-8 text-gray-500">
                 <p>เลือกรอบจาก "รอบประเมิน" เพื่อดูผล</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Raw Eval Tab ────────────────────────────────────────── */}
+        {tab === 'raweval' && (
+          <div>
+            <div className="card mb-3">
+              <h3 className="font-bold text-gray-800 mb-1">🔍 คะแนนดิบรายคน</h3>
+              <p className="text-xs text-gray-400 mb-3">ใครให้ใคร — Q1–Q8</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">กรองผู้ประเมิน</label>
+                  <input
+                    type="text"
+                    placeholder="ค้นหาชื่อ..."
+                    value={rawEvalsFilter.evaluator}
+                    onChange={e => setRawEvalsFilter(p => ({ ...p, evaluator: e.target.value }))}
+                    className="input-field text-xs py-1.5"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">กรองผู้ถูกประเมิน</label>
+                  <input
+                    type="text"
+                    placeholder="ค้นหาชื่อ..."
+                    value={rawEvalsFilter.evaluatee}
+                    onChange={e => setRawEvalsFilter(p => ({ ...p, evaluatee: e.target.value }))}
+                    className="input-field text-xs py-1.5"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {loading && (
+              <div className="text-center py-8">
+                <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
+              </div>
+            )}
+
+            {rawEvals && !loading && (() => {
+              const filtered = rawEvals.filter(row =>
+                row.evaluator_name.includes(rawEvalsFilter.evaluator) &&
+                row.evaluatee_name.includes(rawEvalsFilter.evaluatee)
+              );
+              return (
+                <div className="card overflow-x-auto">
+                  <p className="text-xs text-gray-400 mb-2">{filtered.length} รายการ</p>
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="text-left p-2 font-semibold text-gray-600 whitespace-nowrap sticky left-0 bg-gray-50">ผู้ประเมิน</th>
+                        <th className="text-left p-2 font-semibold text-gray-600 whitespace-nowrap">ประเมิน</th>
+                        {['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8'].map(q => (
+                          <th key={q} className="p-2 text-center font-semibold text-blue-600">{q}</th>
+                        ))}
+                        <th className="p-2 text-center font-bold text-green-700">เฉลี่ย</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((row, i) => {
+                        const qs = [row.q1, row.q2, row.q3, row.q4, row.q5, row.q6, row.q7, row.q8];
+                        const avg = (qs.reduce((s, v) => s + Number(v), 0) / qs.length).toFixed(1);
+                        return (
+                          <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="p-2 text-gray-700 whitespace-nowrap sticky left-0 bg-inherit">{row.evaluator_name}</td>
+                            <td className="p-2 text-gray-700 whitespace-nowrap">{row.evaluatee_name}</td>
+                            {qs.map((v, qi) => (
+                              <td key={qi} className="p-2 text-center">
+                                <NormBadge value={v} />
+                              </td>
+                            ))}
+                            <td className="p-2 text-center font-bold text-green-700">{avg}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+
+            {!rawEvals && !loading && (
+              <div className="card text-center py-8 text-gray-500">
+                <p>เลือกรอบจาก "รอบประเมิน" แล้วกด "คะแนนดิบรายคน"</p>
               </div>
             )}
           </div>

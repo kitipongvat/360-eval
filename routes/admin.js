@@ -149,13 +149,14 @@ router.get('/status', requireAdmin, async (req, res) => {
       `SELECT COUNT(*) as cnt FROM submission_status
        WHERE round_id=$1 AND is_complete=TRUE`, [round.id]
     );
+    const totalRes = await db.query(`SELECT COUNT(*) as cnt FROM employees`);
     const pendingRes = await cronService.getPendingEmployees(round.id);
 
     res.json({
       round,
       completed: parseInt(completedRes.rows[0].cnt),
       pending: pendingRes,
-      total: 21,
+      total: parseInt(totalRes.rows[0].cnt),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -236,6 +237,29 @@ router.get('/yearly-avg', requireAdmin, async (req, res) => {
     result.sort((a, b) => (b.yearly_avg ?? -1) - (a.yearly_avg ?? -1));
 
     res.json({ rounds, employees: result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/raw-evals/:roundId — all individual evaluations (who gave whom, Q1-Q8)
+router.get('/raw-evals/:roundId', requireAdmin, async (req, res) => {
+  try {
+    const { roundId } = req.params;
+    const result = await db.query(
+      `SELECT
+         er.name AS evaluator_name,
+         ee.name AS evaluatee_name,
+         e.q1, e.q2, e.q3, e.q4, e.q5, e.q6, e.q7, e.q8,
+         e.submitted_at
+       FROM evaluations e
+       JOIN employees er ON er.id = e.evaluator_id
+       JOIN employees ee ON ee.id = e.evaluatee_id
+       WHERE e.round_id = $1
+       ORDER BY er.name, ee.name`,
+      [roundId]
+    );
+    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
