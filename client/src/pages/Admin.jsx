@@ -613,12 +613,20 @@ export default function Admin() {
                     <thead>
                       <tr className="bg-gray-50">
                         <th className="text-left p-2 sticky left-0 bg-gray-50 text-gray-600 whitespace-nowrap">ชื่อ</th>
-                        {yearlyData.rounds.map(r => (
-                          <th key={r.id} className="p-2 text-gray-600 text-center whitespace-nowrap">
-                            {r.round_name}
-                          </th>
-                        ))}
-                        <th className="p-2 text-blue-700 font-bold text-center whitespace-nowrap">เฉลี่ย</th>
+                        {yearlyData.rounds.map(r => {
+                          const match = r.round_name.match(/\(([^)]+)\)/);
+                          const label = match ? match[1] : r.round_name;
+                          const parts = label.split(' ');
+                          const month = parts.slice(0, -1).join(' ');
+                          const year = parts[parts.length - 1];
+                          return (
+                            <th key={r.id} className="p-1 text-gray-600 text-center" style={{ minWidth: '52px', maxWidth: '64px' }}>
+                              <span className="block leading-tight">{month}</span>
+                              <span className="block leading-tight text-gray-400">{year}</span>
+                            </th>
+                          );
+                        })}
+                        <th className="p-1 text-blue-700 font-bold text-center whitespace-nowrap">เฉลี่ย</th>
                       </tr>
                     </thead>
                     <tbody>
