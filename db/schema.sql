@@ -12,6 +12,10 @@ CREATE TABLE IF NOT EXISTS employees (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Migration: add email and team columns if not exists
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS team VARCHAR(100);
+
 -- Evaluation rounds
 CREATE TABLE IF NOT EXISTS eval_rounds (
   id SERIAL PRIMARY KEY,

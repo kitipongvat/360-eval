@@ -242,6 +242,31 @@ router.get('/yearly-avg', requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/employees — list all employees
+router.get('/employees', requireAdmin, async (req, res) => {
+  try {
+    const result = await db.query(`SELECT id, name, email, team, has_set_pin, is_admin, created_at FROM employees ORDER BY id`);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/employees — create new employee
+router.post('/employees', requireAdmin, async (req, res) => {
+  const { name, email, team } = req.body;
+  if (!name) return res.status(400).json({ error: 'กรุณาระบุชื่อ' });
+  try {
+    const result = await db.query(
+      `INSERT INTO employees (name, email, team) VALUES ($1, $2, $3) RETURNING id, name, email, team`,
+      [name.trim(), email?.trim() || null, team?.trim() || null]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/admin/raw-evals/:roundId — all individual evaluations (who gave whom, Q1-Q8)
 router.get('/raw-evals/:roundId', requireAdmin, async (req, res) => {
   try {

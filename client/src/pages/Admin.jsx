@@ -28,6 +28,8 @@ export default function Admin() {
   const [rawEvals, setRawEvals] = useState(null);
   const [rawEvalsRoundId, setRawEvalsRoundId] = useState(null);
   const [rawEvalsFilter, setRawEvalsFilter] = useState({ evaluator: '', evaluatee: '' });
+  const [employees, setEmployees] = useState(null);
+  const [newEmp, setNewEmp] = useState({ name: '', email: '', team: '' });
 
   // New round form
   const [newRound, setNewRound] = useState({ roundName: '', openAt: '', closeAt: '' });
@@ -59,6 +61,29 @@ export default function Admin() {
       showMsg('ไม่สามารถโหลดผลได้');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadEmployees() {
+    try {
+      const res = await api.get('/admin/employees');
+      setEmployees(res.data);
+      setTab('employees');
+    } catch (e) {
+      showMsg('โหลดรายชื่อไม่ได้');
+    }
+  }
+
+  async function createEmployee(e) {
+    e.preventDefault();
+    try {
+      await api.post('/admin/employees', newEmp);
+      showMsg(`เพิ่ม "${newEmp.name}" แล้ว ✓`);
+      setNewEmp({ name: '', email: '', team: '' });
+      const res = await api.get('/admin/employees');
+      setEmployees(res.data);
+    } catch (err) {
+      showMsg(err.response?.data?.error || 'เกิดข้อผิดพลาด', true);
     }
   }
 
@@ -186,6 +211,7 @@ export default function Admin() {
             { id: 'results', label: '🏆 ผลคะแนน' },
             { id: 'raweval', label: '🔍 คะแนนดิบรายคน' },
             { id: 'yearly', label: '📈 ประวัติ' },
+            { id: 'employees', label: '👥 พนักงาน' },
           ].map(t => (
             <button
               key={t.id}
@@ -654,6 +680,85 @@ export default function Admin() {
             {!yearlyData && !loading && (
               <div className="card text-center py-8 text-gray-500">
                 <p>กด "โหลด" เพื่อดูคะแนนรวม Norm รายรอบ</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Employees Tab ───────────────────────────────────────── */}
+        {tab === 'employees' && (
+          <div>
+            {/* Add employee form */}
+            <div className="card mb-4">
+              <h3 className="font-bold text-gray-800 mb-3">➕ เพิ่มพนักงานใหม่</h3>
+              <form onSubmit={createEmployee} className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="ชื่อ-นามสกุล *"
+                  value={newEmp.name}
+                  onChange={e => setNewEmp(p => ({ ...p, name: e.target.value }))}
+                  className="input-field"
+                  required
+                />
+                <input
+                  type="email"
+                  placeholder="อีเมล (ถ้ามี)"
+                  value={newEmp.email}
+                  onChange={e => setNewEmp(p => ({ ...p, email: e.target.value }))}
+                  className="input-field"
+                />
+                <input
+                  type="text"
+                  placeholder="ทีม เช่น J2"
+                  value={newEmp.team}
+                  onChange={e => setNewEmp(p => ({ ...p, team: e.target.value }))}
+                  className="input-field"
+                />
+                <button type="submit" className="btn-primary">เพิ่มพนักงาน</button>
+              </form>
+            </div>
+
+            {/* Employee list */}
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-gray-800">รายชื่อพนักงานทั้งหมด</h3>
+              <button onClick={loadEmployees} className="text-sm bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg">
+                🔄 รีโหลด
+              </button>
+            </div>
+
+            {employees ? (
+              <div className="card overflow-x-auto">
+                <p className="text-xs text-gray-400 mb-2">{employees.length} คน</p>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="text-left p-2 text-gray-600">#</th>
+                      <th className="text-left p-2 text-gray-600">ชื่อ</th>
+                      <th className="text-left p-2 text-gray-600">อีเมล</th>
+                      <th className="text-left p-2 text-gray-600">ทีม</th>
+                      <th className="text-center p-2 text-gray-600">PIN</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {employees.map((emp, i) => (
+                      <tr key={emp.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="p-2 text-gray-400">{emp.id}</td>
+                        <td className="p-2 font-medium text-gray-800 whitespace-nowrap">{emp.name}</td>
+                        <td className="p-2 text-gray-500">{emp.email || '—'}</td>
+                        <td className="p-2 text-gray-500">{emp.team || '—'}</td>
+                        <td className="p-2 text-center">
+                          {emp.has_set_pin
+                            ? <span className="text-green-600">✓</span>
+                            : <span className="text-orange-400">ยังไม่ตั้ง</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="card text-center py-6 text-gray-400 text-sm">
+                <p>กด "รีโหลด" เพื่อดูรายชื่อ</p>
               </div>
             )}
           </div>
