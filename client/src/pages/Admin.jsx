@@ -87,6 +87,17 @@ export default function Admin() {
     }
   }
 
+  async function deleteEmployee(id, name) {
+    if (!confirm(`ลบ "${name}" ออกจากระบบ?`)) return;
+    try {
+      await api.delete(`/admin/employees/${id}`);
+      showMsg(`ลบ "${name}" แล้ว ✓`);
+      setEmployees(prev => prev.filter(e => e.id !== id));
+    } catch (err) {
+      showMsg(err.response?.data?.error || 'เกิดข้อผิดพลาด', true);
+    }
+  }
+
   async function loadRawEvals(roundId) {
     setLoading(true);
     try {
@@ -737,6 +748,7 @@ export default function Admin() {
                       <th className="text-left p-2 text-gray-600">อีเมล</th>
                       <th className="text-left p-2 text-gray-600">ทีม</th>
                       <th className="text-center p-2 text-gray-600">PIN</th>
+                      <th className="p-2"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -750,6 +762,14 @@ export default function Admin() {
                           {emp.has_set_pin
                             ? <span className="text-green-600">✓</span>
                             : <span className="text-orange-400">ยังไม่ตั้ง</span>}
+                        </td>
+                        <td className="p-2 text-center">
+                          <button
+                            onClick={() => deleteEmployee(emp.id, emp.name)}
+                            className="text-red-400 hover:text-red-600 text-xs px-2 py-1 rounded hover:bg-red-50"
+                          >
+                            ลบ
+                          </button>
                         </td>
                       </tr>
                     ))}

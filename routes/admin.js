@@ -267,6 +267,25 @@ router.post('/employees', requireAdmin, async (req, res) => {
   }
 });
 
+// DELETE /api/admin/employees/:id — remove employee (only if no evaluation data)
+router.delete('/employees/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const evalCheck = await db.query(
+      `SELECT COUNT(*) as cnt FROM evaluations WHERE evaluator_id=$1 OR evaluatee_id=$1`,
+      [id]
+    );
+    if (parseInt(evalCheck.rows[0].cnt) > 0) {
+      return res.status(400).json({ error: 'ไม่สามารถลบได้ เพราะมีข้อมูลการประเมินอยู่ในระบบ' });
+    }
+    const result = await db.query(`DELETE FROM employees WHERE id=$1 RETURNING name`, [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'ไม่พบพนักงาน' });
+    res.json({ success: true, message: `ลบ "${result.rows[0].name}" แล้ว` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/admin/raw-evals/:roundId — all individual evaluations (who gave whom, Q1-Q8)
 router.get('/raw-evals/:roundId', requireAdmin, async (req, res) => {
   try {
