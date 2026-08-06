@@ -98,6 +98,16 @@ export default function Admin() {
     }
   }
 
+  async function toggleActive(id, name, currentActive) {
+    try {
+      const res = await api.patch(`/admin/employees/${id}/toggle-active`);
+      showMsg(res.data.message + ' ✓');
+      setEmployees(prev => prev.map(e => e.id === id ? { ...e, is_active: res.data.is_active } : e));
+    } catch (err) {
+      showMsg(err.response?.data?.error || 'เกิดข้อผิดพลาด', true);
+    }
+  }
+
   async function loadRawEvals(roundId) {
     setLoading(true);
     try {
@@ -745,23 +755,34 @@ export default function Admin() {
                     <tr className="bg-gray-50">
                       <th className="text-left p-2 text-gray-600">#</th>
                       <th className="text-left p-2 text-gray-600">ชื่อ</th>
-                      <th className="text-left p-2 text-gray-600">อีเมล</th>
                       <th className="text-left p-2 text-gray-600">ทีม</th>
                       <th className="text-center p-2 text-gray-600">PIN</th>
+                      <th className="text-center p-2 text-gray-600">สถานะ</th>
                       <th className="p-2"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {employees.map((emp, i) => (
-                      <tr key={emp.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <tr key={emp.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${emp.is_active === false ? 'opacity-50' : ''}`}>
                         <td className="p-2 text-gray-400">{emp.id}</td>
                         <td className="p-2 font-medium text-gray-800 whitespace-nowrap">{emp.name}</td>
-                        <td className="p-2 text-gray-500">{emp.email || '—'}</td>
                         <td className="p-2 text-gray-500">{emp.team || '—'}</td>
                         <td className="p-2 text-center">
                           {emp.has_set_pin
                             ? <span className="text-green-600">✓</span>
                             : <span className="text-orange-400">ยังไม่ตั้ง</span>}
+                        </td>
+                        <td className="p-2 text-center">
+                          <button
+                            onClick={() => toggleActive(emp.id, emp.name, emp.is_active)}
+                            className={`text-xs px-2 py-1 rounded font-medium ${
+                              emp.is_active !== false
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            }`}
+                          >
+                            {emp.is_active !== false ? 'ใช้งาน' : 'ปิดใช้'}
+                          </button>
                         </td>
                         <td className="p-2 text-center">
                           <button

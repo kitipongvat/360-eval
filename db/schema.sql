@@ -12,9 +12,10 @@ CREATE TABLE IF NOT EXISTS employees (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Migration: add email and team columns if not exists
+-- Migration: add email, team, and is_active columns if not exists
 ALTER TABLE employees ADD COLUMN IF NOT EXISTS email VARCHAR(255);
 ALTER TABLE employees ADD COLUMN IF NOT EXISTS team VARCHAR(100);
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
 
 -- Evaluation rounds
 CREATE TABLE IF NOT EXISTS eval_rounds (

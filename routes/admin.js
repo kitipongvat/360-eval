@@ -245,8 +245,24 @@ router.get('/yearly-avg', requireAdmin, async (req, res) => {
 // GET /api/admin/employees — list all employees
 router.get('/employees', requireAdmin, async (req, res) => {
   try {
-    const result = await db.query(`SELECT id, name, email, team, has_set_pin, is_admin, created_at FROM employees ORDER BY id`);
+    const result = await db.query(`SELECT id, name, email, team, has_set_pin, is_admin, is_active, created_at FROM employees ORDER BY id`);
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/admin/employees/:id/toggle-active — activate or deactivate employee
+router.patch('/employees/:id/toggle-active', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      `UPDATE employees SET is_active = NOT is_active WHERE id=$1 RETURNING id, name, is_active`,
+      [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'ไม่พบพนักงาน' });
+    const emp = result.rows[0];
+    res.json({ success: true, message: `${emp.name} — ${emp.is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}แล้ว`, is_active: emp.is_active });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

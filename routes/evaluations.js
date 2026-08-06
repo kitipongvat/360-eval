@@ -3,7 +3,16 @@ const router = express.Router();
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
-const TOTAL_EMPLOYEES = 21;
+// Number of OTHER employees a given employee must evaluate (everyone except
+// themselves). Computed from the employees table instead of a hardcoded
+// constant so it stays correct as staff join/leave.
+async function getOtherEmployeesCount(employeeId) {
+  const res = await db.query(
+    `SELECT COUNT(*) as cnt FROM employees WHERE id != $1 AND is_active = TRUE`,
+    [employeeId]
+  );
+  return parseInt(res.rows[0].cnt);
+}
 
 // GET /api/evaluations/round — get current open round
 router.get('/round', async (req, res) => {
@@ -33,9 +42,9 @@ router.get('/progress', requireAuth, async (req, res) => {
 
     const employeeId = req.user.id;
 
-    // All employees except self
+    // All active employees except self
     const allEmps = await db.query(
-      `SELECT id, name FROM employees WHERE id != $1 ORDER BY id`,
+      `SELECT id, name FROM employees WHERE id != $1 AND is_active = TRUE ORDER BY id`,
       [employeeId]
     );
 
@@ -107,7 +116,8 @@ router.post('/save', requireAuth, async (req, res) => {
       [roundId, evaluatorId]
     );
     const completedCount = parseInt(countRes.rows[0].cnt);
-    const isComplete = completedCount >= (TOTAL_EMPLOYEES - 1);
+    const otherEmployees = await getOtherEmployeesCount(evaluatorId);
+    const isComplete = completedCount >= otherEmployees;
 
     await db.query(
       `INSERT INTO submission_status (round_id, employee_id, completed_count, total_count, is_complete, completed_at)
@@ -115,7 +125,7 @@ router.post('/save', requireAuth, async (req, res) => {
        ON CONFLICT (round_id, employee_id)
        DO UPDATE SET completed_count=$3, is_complete=$5,
          completed_at = CASE WHEN $5 THEN NOW() ELSE NULL END`,
-      [roundId, evaluatorId, completedCount, TOTAL_EMPLOYEES - 1, isComplete,
+      [roundId, evaluatorId, completedCount, otherEmployees, isComplete,
        isComplete ? new Date() : null]
     );
 
@@ -137,10 +147,11 @@ router.post('/submit-all', requireAuth, async (req, res) => {
       [roundId, evaluatorId]
     );
     const cnt = parseInt(countRes.rows[0].cnt);
+    const otherEmployees = await getOtherEmployeesCount(evaluatorId);
 
-    if (cnt < TOTAL_EMPLOYEES - 1) {
+    if (cnt < otherEmployees) {
       return res.status(400).json({
-        error: `ยังประเมินไม่ครบ (${cnt}/${TOTAL_EMPLOYEES - 1} คน)`,
+        error: `ยังประเมินไม่ครบ (${cnt}/${otherEmployees} คน)`,
       });
     }
 
@@ -149,7 +160,7 @@ router.post('/submit-all', requireAuth, async (req, res) => {
        VALUES ($1,$2,$3,$4,TRUE,NOW())
        ON CONFLICT (round_id, employee_id)
        DO UPDATE SET is_complete=TRUE, completed_at=NOW(), completed_count=$3`,
-      [roundId, evaluatorId, cnt, TOTAL_EMPLOYEES - 1]
+      [roundId, evaluatorId, cnt, otherEmployees]
     );
 
     res.json({ success: true, message: 'ส่งผลการประเมินเรียบร้อยแล้ว!' });

@@ -54,7 +54,6 @@ async function closeRound(round) {
   console.log(`[Cron] Round ${round.id} closed`);
 
   const completedCount = await getCompletedCount(round.id);
-  const totalEmployees = 21;
 
   // Compute scores
   await scoreService.computeScores(round.id);

@@ -18,9 +18,10 @@ router.get('/employees', async (req, res) => {
 
 // POST /api/auth/setup-pin — first time PIN setup
 router.post('/setup-pin', async (req, res) => {
-  const { employeeId, pin } = req.body;
-  if (!employeeId || !pin || pin.length < 4) {
-    return res.status(400).json({ error: 'กรุณาระบุ PIN อย่างน้อย 4 หลัก' });
+  const { employeeId } = req.body;
+  const pin = typeof req.body.pin === 'string' ? req.body.pin.trim() : '';
+  if (!employeeId || pin.length < 4 || pin.length > 20) {
+    return res.status(400).json({ error: 'กรุณาระบุ PIN 4-20 หลัก' });
   }
 
   try {
@@ -45,7 +46,8 @@ router.post('/setup-pin', async (req, res) => {
 
 // POST /api/auth/login — login with PIN
 router.post('/login', async (req, res) => {
-  const { employeeId, pin } = req.body;
+  const { employeeId } = req.body;
+  const pin = typeof req.body.pin === 'string' ? req.body.pin.trim() : '';
   if (!employeeId || !pin) {
     return res.status(400).json({ error: 'กรุณาระบุรหัสพนักงานและ PIN' });
   }
