@@ -87,7 +87,7 @@ router.get('/results/:roundId', requireAdmin, async (req, res) => {
     const pendingRes = await db.query(
       `SELECT e.id, e.name FROM employees e
        LEFT JOIN submission_status ss ON ss.employee_id=e.id AND ss.round_id=$1
-       WHERE ss.is_complete IS NULL OR ss.is_complete=FALSE
+       WHERE e.is_active = TRUE AND (ss.is_complete IS NULL OR ss.is_complete=FALSE)
        ORDER BY e.id`,
       [roundId]
     );
@@ -149,7 +149,7 @@ router.get('/status', requireAdmin, async (req, res) => {
       `SELECT COUNT(*) as cnt FROM submission_status
        WHERE round_id=$1 AND is_complete=TRUE`, [round.id]
     );
-    const totalRes = await db.query(`SELECT COUNT(*) as cnt FROM employees`);
+    const totalRes = await db.query(`SELECT COUNT(*) as cnt FROM employees WHERE is_active = TRUE`);
     const pendingRes = await cronService.getPendingEmployees(round.id);
 
     res.json({
@@ -196,7 +196,7 @@ router.get('/yearly-avg', requireAdmin, async (req, res) => {
     const rounds = roundsRes.rows;
 
     // Get all employees
-    const empRes = await db.query(`SELECT id, name FROM employees ORDER BY id`);
+    const empRes = await db.query(`SELECT id, name FROM employees WHERE is_active = TRUE ORDER BY id`);
     const employees = empRes.rows;
 
     // Get norm sums per employee per round

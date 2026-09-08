@@ -19,7 +19,8 @@ async function getPendingEmployees(roundId) {
      FROM employees e
      LEFT JOIN submission_status ss
        ON ss.employee_id = e.id AND ss.round_id = $1
-     WHERE (ss.is_complete IS NULL OR ss.is_complete = FALSE)
+     WHERE e.is_active = TRUE
+       AND (ss.is_complete IS NULL OR ss.is_complete = FALSE)
      ORDER BY e.id`,
     [roundId]
   );
