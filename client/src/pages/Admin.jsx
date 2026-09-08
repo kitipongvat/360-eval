@@ -722,13 +722,6 @@ export default function Admin() {
                   required
                 />
                 <input
-                  type="email"
-                  placeholder="อีเมล (ถ้ามี)"
-                  value={newEmp.email}
-                  onChange={e => setNewEmp(p => ({ ...p, email: e.target.value }))}
-                  className="input-field"
-                />
-                <input
                   type="text"
                   placeholder="ทีม เช่น J2"
                   value={newEmp.team}
